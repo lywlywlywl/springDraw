@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>New webpage</title>
+        <style>
+        	body {
+            	margin: 0px;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+		<canvas id="canvas"></canvas>
+		</div>
+        <script>
+			document.addEventListener("DOMContentLoaded", function() {
+				const canvas = document.getElementById("canvas");
+				fitCanvas();
+				const context = canvas.getContext("2d");
+				context.strokeStyle = "rgb(255, 255, 255)";
+				let mouseX = 0;
+				let mouseY = 0;
+				class MouseSpringSystem {
+					constructor(mass, stiffness, damping, numberOfMasses) {
+						this.mass = mass;
+						this.stiffness = stiffness;
+						this.damping = damping;
+						this.numberOfMasses = numberOfMasses;
+						this.masses = [];
+					}
+					draw() {
+						context.beginPath();
+						for (let i = 0; i < this.masses.length; i++) {
+							const currentMass = this.masses[i];
+							const parentMass = i === 0 ? {
+								x: mouseX,
+								y: mouseY,
+							} : this.masses[i - 1];
+							const springForceX = (currentMass.x - parentMass.x) * -this.stiffness;
+							const springForceY = (currentMass.y - parentMass.y) * -this.stiffness;
+							const dampingForceX = currentMass.xVelocity * this.damping;
+							const dampingForceY = currentMass.yVelocity * this.damping;
+							const forceX = springForceX - dampingForceX;
+							const forceY = springForceY - dampingForceY;
+							const accelerationX = forceX / this.mass;
+							const accelerationY = forceY / this.mass;
+							currentMass.xVelocity += accelerationX;
+							currentMass.yVelocity += accelerationY;
+							currentMass.x += currentMass.xVelocity;
+							currentMass.y += currentMass.yVelocity;
+							context.lineTo(currentMass.x, currentMass.y);
+						}
+						context.stroke();
+						requestAnimationFrame(this.draw.bind(this));
+					}
+					clear() {
+						this.masses = [];
+					}
+					resetMasses() {
+						this.masses = [];
+						for (let i = 0; i < this.numberOfMasses; i++) {
+							this.masses.push({
+								x: mouseX,
+								y: mouseY,
+								xVelocity: 0,
+								yVelocity: 0
+							});
+						}
+					}
+					startDrawing() {
+						requestAnimationFrame(this.draw.bind(this));
+					}
+				}
+				document.addEventListener("mousemove", function(event) {
+					mouseX = event.clientX;
+					mouseY = event.clientY;
+				});
+				const mouseSpringSystem = new MouseSpringSystem(20, 5, 15, 8);
+				document.addEventListener("mousedown", function() {
+					mouseSpringSystem.resetMasses();
+				});
+				document.addEventListener("mouseup", function() {
+					mouseSpringSystem.clear();
+				});
+				function fitCanvas() {
+					canvas.width = window.innerWidth;
+					canvas.height = window.innerHeight;
+				}
+				document.addEventListener("resize", fitCanvas);
+				mouseSpringSystem.startDrawing();
+			});
+        </script>
+    </body>
+</html>
